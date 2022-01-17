@@ -1,0 +1,21 @@
+{
+  "default": {
+    "use_self_loop": true,
+    "hidden_dim": 64,
+    "n_layers": 2
+  },
+  "imdb-gtn": {
+    "n_layers": 2
+  },
+  "acm-gtn": {
+    "n_layers": 2
+  },
+  "dblp-gtn": {
+    "n_layers": 5
+  },
+  "lastfm": {
+    "n_layers": 2,
+    "lr": 0.02,
+    "dropout": 0.0
+  }
+}

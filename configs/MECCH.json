@@ -1,0 +1,34 @@
+{
+  "default": {
+    "ablation": false,
+    "context_encoder": "mean",
+    "use_v": false,
+    "n_heads": 8,
+    "metapath_fusion": "conv",
+    "residual": false,
+    "layer_norm": true,
+    "hidden_dim": 64,
+    "n_neighbor_samples": 0,
+    "batch_size": 128
+  },
+  "imdb-gtn": {
+    "max_mp_length": 5,
+    "n_layers": 1
+  },
+  "acm-gtn": {
+    "max_mp_length": 1,
+    "n_layers": 2
+  },
+  "dblp-gtn": {
+    "max_mp_length": 2,
+    "n_layers": 2
+  },
+  "lastfm": {
+    "max_mp_length": 1,
+    "n_layers": 2,
+    "lr": 0.01,
+    "weight_decay": 0.0,
+    "batch_size": 102400,
+    "exclude": false
+  }
+}

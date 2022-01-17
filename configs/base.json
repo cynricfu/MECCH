@@ -1,0 +1,9 @@
+{
+  "n_neighbor_samples": 0,
+  "dropout": 0.5,
+  "lr": 0.005,
+  "weight_decay": 0.001,
+  "n_epochs": 500,
+  "early_stopping_mode": "score",
+  "patience": 50
+}

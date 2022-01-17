@@ -1,0 +1,195 @@
+{
+  "default": {
+    "hidden_dim": 64,
+    "n_heads": 8,
+    "n_layers": 2
+  },
+  "imdb-gtn": {
+    "n_layers": 3,
+    "metapaths": [
+      [
+        [
+          "movie",
+          "movie-actor",
+          "actor"
+        ],
+        [
+          "actor",
+          "actor-movie",
+          "movie"
+        ]
+      ],
+      [
+        [
+          "movie",
+          "movie-director",
+          "director"
+        ],
+        [
+          "director",
+          "director-movie",
+          "movie"
+        ]
+      ]
+    ]
+  },
+  "acm-gtn": {
+    "n_layers": 2,
+    "metapaths": [
+      [
+        [
+          "paper",
+          "paper-author",
+          "author"
+        ],
+        [
+          "author",
+          "author-paper",
+          "paper"
+        ]
+      ],
+      [
+        [
+          "paper",
+          "paper-subject",
+          "subject"
+        ],
+        [
+          "subject",
+          "subject-paper",
+          "paper"
+        ]
+      ]
+    ]
+  },
+  "dblp-gtn": {
+    "n_layers": 1,
+    "metapaths": [
+      [
+        [
+          "author",
+          "author-paper",
+          "paper"
+        ],
+        [
+          "paper",
+          "paper-author",
+          "author"
+        ]
+      ],
+      [
+        [
+          "author",
+          "author-paper",
+          "paper"
+        ],
+        [
+          "paper",
+          "paper-conference",
+          "conference"
+        ],
+        [
+          "conference",
+          "conference-paper",
+          "paper"
+        ],
+        [
+          "paper",
+          "paper-author",
+          "author"
+        ]
+      ]
+    ]
+  },
+  "lastfm": {
+    "n_layers": 1,
+    "metapaths_u": [
+      [
+        [
+          "user",
+          "user-user",
+          "user"
+        ]
+      ],
+      [
+        [
+          "user",
+          "user-artist",
+          "artist"
+        ],
+        [
+          "artist",
+          "artist-user",
+          "user"
+        ]
+      ],
+      [
+        [
+          "user",
+          "user-artist",
+          "artist"
+        ],
+        [
+          "artist",
+          "artist-tag",
+          "tag"
+        ],
+        [
+          "tag",
+          "tag-artist",
+          "artist"
+        ],
+        [
+          "artist",
+          "artist-user",
+          "user"
+        ]
+      ]
+    ],
+    "metapaths_v": [
+      [
+        [
+          "artist",
+          "artist-user",
+          "user"
+        ],
+        [
+          "user",
+          "user-artist",
+          "artist"
+        ]
+      ],
+      [
+        [
+          "artist",
+          "artist-user",
+          "user"
+        ],
+        [
+          "user",
+          "user-user",
+          "user"
+        ],
+        [
+          "user",
+          "user-artist",
+          "artist"
+        ]
+      ],
+      [
+        [
+          "artist",
+          "artist-tag",
+          "tag"
+        ],
+        [
+          "tag",
+          "tag-artist",
+          "artist"
+        ]
+      ]
+    ],
+    "lr": 0.02,
+    "weight_decay": 0.0
+  }
+}

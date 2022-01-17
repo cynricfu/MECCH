@@ -1,0 +1,22 @@
+{
+  "default": {
+    "hidden_dim": 64,
+    "n_heads": 8,
+    "n_layers": 4
+  },
+  "imdb-gtn": {
+    "n_layers": 2,
+    "lr": 0.001
+  },
+  "acm-gtn": {
+    "n_layers": 3
+  },
+  "dblp-gtn": {
+    "n_layers": 4,
+    "lr": 0.001
+  },
+  "lastfm": {
+    "n_layers": 1,
+    "lr": 0.01
+  }
+}
