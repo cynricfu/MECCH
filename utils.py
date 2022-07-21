@@ -2,10 +2,32 @@ import pickle
 from collections import defaultdict
 from pathlib import Path
 import shutil
+import json
 
 import dgl
 import numpy as np
 import torch as th
+
+
+def load_base_config(path='./configs/base.json'):
+    with open(path) as f:
+        config = json.load(f)
+        print('Base configs loaded.')
+    return config
+
+
+def load_model_config(path, dataset):
+    with open(path) as f:
+        config = json.load(f)
+        print('Model configs loaded.')
+    if dataset in config:
+        config_out = config['default']
+        config_out.update(config[dataset])
+        print('{} dataset configs for this model loaded, override defaults.'.format(dataset))
+        return config_out
+    else:
+        print('Model do not have hyperparameter configs for {} dataset, use defaults.'.format(dataset))
+        return config['default']
 
 
 def get_all_metapaths(g, min_length=1, max_length=4):
@@ -74,6 +96,39 @@ def select_metapaths(all_metapaths_list, length=4):
         if len(mp) == length:
             selected_metapaths[mp[-1][-1]].append(metapath2str(mp))
     return dict(selected_metapaths)
+
+
+def get_metapath_g(g, args):
+    # Generate the metapath neighbor graphs of all possible metapaths
+    # and integrate them into one dgl.DGLGraph -- metapath_g
+    all_metapaths_dict = get_all_metapaths(g, max_length=args.max_mp_length)
+    all_metapaths_list = metapath_dict2list(all_metapaths_dict)
+    metapath_g = None
+    for mp in all_metapaths_list:
+        metapath_g = add_metapath_connection(g, mp, metapath_g)
+    # copy features and labels
+    metapath_g.ndata["x"] = g.ndata["x"]
+    metapath_g.ndata["y"] = g.ndata["y"]
+    # select only max-length metapath
+    selected_metapaths = select_metapaths(all_metapaths_list, length=args.max_mp_length)
+
+    return metapath_g, selected_metapaths
+
+
+def get_khop_g(g, args):
+    homo_g = dgl.to_homogeneous(g)
+    temp_homo_g = dgl.to_homogeneous(g)
+    homo_g.edata[dgl.ETYPE][:] = 0
+    homo_g.edata[dgl.EID] = th.arange(homo_g.num_edges())
+    for k in range(2, args.max_mp_length + 1):
+        edges = dgl.khop_graph(temp_homo_g, k).edges()
+        etypes = th.full((edges[0].shape[0],), k - 1)
+        eids = th.arange(edges[0].shape[0])
+        homo_g.add_edges(edges[0], edges[1], {dgl.ETYPE: etypes, dgl.EID: eids})
+    hetero_g = dgl.to_heterogeneous(homo_g, g.ntypes, ['{}-hop'.format(i + 1) for i in range(args.max_mp_length)])
+    hetero_g.ndata['x'] = g.ndata['x']
+    hetero_g.ndata['y'] = g.ndata['y']
+    return hetero_g
 
 
 def load_data_nc(dataset_name, prefix="./data"):
@@ -230,6 +285,17 @@ def load_data_lp(dataset_name, prefix="./data"):
         val_neg_uv = th.tensor(np.load(str(load_path / 'val_neg_user_artist.npy')))
         test_neg_uv = th.tensor(np.load(str(load_path / 'test_neg_user_artist.npy')))
         in_dim_dict = {ntype: -1 for ntype in g_test.ntypes}
+    elif dataset_name == 'pubmed':
+        load_path = Path(prefix, dataset_name)
+        g_list, _ = dgl.load_graphs(str(load_path / 'graph.bin'))
+        g_train, g_val, g_test = g_list
+        train_val_test_idx = np.load(str(load_path / 'train_val_test_idx.npz'))
+        train_eid_dict = {'DISEASE-and-DISEASE': th.tensor(train_val_test_idx['train_idx'])}
+        val_eid_dict = {'DISEASE-and-DISEASE': th.tensor(train_val_test_idx['val_idx'])}
+        test_eid_dict = {'DISEASE-and-DISEASE': th.tensor(train_val_test_idx['test_idx'])}
+        val_neg_uv = th.tensor(np.load(str(load_path / 'val_neg_edges.npy')))
+        test_neg_uv = th.tensor(np.load(str(load_path / 'test_neg_edges.npy')))
+        in_dim_dict = {ntype: g_test.nodes[ntype].data['x'].shape[1] for ntype in g_test.ntypes}
     else:
         raise NotImplementedError
 

@@ -1,5 +1,6 @@
 import argparse
-import json
+import pickle
+from pathlib import Path
 
 import dgl
 import numpy as np
@@ -12,62 +13,8 @@ from model.baselines.RGCN import RGCN
 from model.baselines.HGT import HGT
 from model.baselines.HAN import HAN, HAN_lp
 from model.modules import LinkPrediction_minibatch, LinkPrediction_fullbatch
-from utils import metapath2str, add_metapath_connection, get_all_metapaths, load_data_nc, load_data_lp, \
-    metapath_dict2list, select_metapaths, get_save_path
-
-
-def load_base_config(path='./configs/base.json'):
-    with open(path) as f:
-        config = json.load(f)
-        print('Base configs loaded.')
-    return config
-
-
-def load_model_config(path, dataset):
-    with open(path) as f:
-        config = json.load(f)
-        print('Model configs loaded.')
-    if dataset in config:
-        config_out = config['default']
-        config_out.update(config[dataset])
-        print('{} dataset configs for this model loaded, override defaults.'.format(dataset))
-        return config_out
-    else:
-        print('Model do not have hyperparameter configs for {} dataset, use defaults.'.format(dataset))
-        return config['default']
-
-
-def get_metapath_g(g, args):
-    # Generate the metapath neighbor graphs of all possible metapaths
-    # and integrate them into one dgl.DGLGraph -- metapath_g
-    all_metapaths_dict = get_all_metapaths(g, max_length=args.max_mp_length)
-    all_metapaths_list = metapath_dict2list(all_metapaths_dict)
-    metapath_g = None
-    for mp in all_metapaths_list:
-        metapath_g = add_metapath_connection(g, mp, metapath_g)
-    # copy features and labels
-    metapath_g.ndata["x"] = g.ndata["x"]
-    metapath_g.ndata["y"] = g.ndata["y"]
-    # select only max-length metapath
-    selected_metapaths = select_metapaths(all_metapaths_list, length=args.max_mp_length)
-
-    return metapath_g, selected_metapaths
-
-
-def get_khop_g(g, args):
-    homo_g = dgl.to_homogeneous(g)
-    temp_homo_g = dgl.to_homogeneous(g)
-    homo_g.edata[dgl.ETYPE][:] = 0
-    homo_g.edata[dgl.EID] = th.arange(homo_g.num_edges())
-    for k in range(2, args.max_mp_length + 1):
-        edges = dgl.khop_graph(temp_homo_g, k).edges()
-        etypes = th.full((edges[0].shape[0],), k - 1)
-        eids = th.arange(edges[0].shape[0])
-        homo_g.add_edges(edges[0], edges[1], {dgl.ETYPE: etypes, dgl.EID: eids})
-    hetero_g = dgl.to_heterogeneous(homo_g, g.ntypes, ['{}-hop'.format(i + 1) for i in range(args.max_mp_length)])
-    hetero_g.ndata['x'] = g.ndata['x']
-    hetero_g.ndata['y'] = g.ndata['y']
-    return hetero_g
+from utils import metapath2str, get_metapath_g, get_khop_g, load_data_nc, load_data_lp, \
+    get_save_path, load_base_config, load_model_config
 
 
 def main_nc(args):
@@ -192,6 +139,7 @@ def main_lp(args):
         # load data
         (g_train, g_val, g_test), in_dim_dict, (train_eid_dict, val_eid_dict, test_eid_dict), (
             val_neg_uv, test_neg_uv) = load_data_lp(args.dataset)
+        print("Loaded data from dataset: {}".format(args.dataset))
 
         # check cuda
         use_cuda = args.gpu >= 0 and th.cuda.is_available()
@@ -232,9 +180,22 @@ def main_lp(args):
                 test_eid_dict = {metapath2str([g_test.to_canonical_etype(k)]): v for k, v in test_eid_dict.items()}
                 target_etype = list(train_eid_dict.keys())[0]
 
-                g_train, _ = get_metapath_g(g_train, args)
-                g_val, _ = get_metapath_g(g_val, args)
-                g_test, selected_metapaths = get_metapath_g(g_test, args)
+                # cache metapath_g
+                load_path = Path('./data') / args.dataset / 'metapath_g-max_mp={}'.format(args.max_mp_length)
+                if load_path.is_dir():
+                    g_list, _ = dgl.load_graphs(str(load_path / 'graph.bin'))
+                    g_train, g_val, g_test = g_list
+                    with open(load_path / 'selected_metapaths.pkl', 'rb') as in_file:
+                        selected_metapaths = pickle.load(in_file)
+                else:
+                    g_train, _ = get_metapath_g(g_train, args)
+                    g_val, _ = get_metapath_g(g_val, args)
+                    g_test, selected_metapaths = get_metapath_g(g_test, args)
+                    load_path.mkdir()
+                    dgl.save_graphs(str(load_path / 'graph.bin'), [g_train, g_val, g_test])
+                    with open(load_path / 'selected_metapaths.pkl', 'wb') as out_file:
+                        pickle.dump(selected_metapaths, out_file)
+
                 n_heads_list = [args.n_heads] * args.n_layers
                 model = MECCH(
                     g_train,
@@ -290,6 +251,8 @@ def main_lp(args):
                 minibatch_flag = False
         elif args.model == 'HAN':
             # assume the target node type has attributes
+            # Note: this HAN version from DGL conducts full-batch training with online metapath_reachable_graph,
+            #       preprocessing needed for the PubMed dataset
             assert args.hidden_dim % args.n_heads == 0
             n_heads_list = [args.n_heads] * args.n_layers
             model_lp = HAN_lp(

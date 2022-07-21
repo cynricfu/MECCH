@@ -211,3 +211,37 @@ class HGT(nn.Module):
             for i in range(self.n_layers):
                 h_dict = self.gcs[i](G, h_dict)
         return {ntype: self.out(h) for ntype, h in h_dict.items()}
+
+    def get_embs(self, G, x_dict):
+        h_dict = {}
+        if isinstance(G, list):
+            # minibatch
+            nids_dict = {
+                ntype: nids
+                for ntype, nids in G[0].srcdata[dgl.NID].items()
+                if self.in_dim_dict[ntype] < 0
+            }
+            h_embed_dict = self.embed_layer(nids_dict)
+            h_linear_dict = self.linear_layer(x_dict)
+            h_dict = h_embed_dict | h_linear_dict
+            for ntype in h_dict:
+                h_dict[ntype] = F.gelu(h_dict[ntype])
+
+            for layer, block in zip(self.gcs, G):
+                h_dict = layer(block, h_dict)
+        else:
+            # full batch
+            nids_dict = {
+                ntype: G.nodes(ntype)
+                for ntype in G.ntypes
+                if self.in_dim_dict[ntype] < 0
+            }
+            h_embed_dict = self.embed_layer(nids_dict)
+            h_linear_dict = self.linear_layer(x_dict)
+            h_dict = h_embed_dict | h_linear_dict
+            for ntype in h_dict:
+                h_dict[ntype] = F.gelu(h_dict[ntype])
+
+            for i in range(self.n_layers):
+                h_dict = self.gcs[i](G, h_dict)
+        return {ntype: self.out(h) for ntype, h in h_dict.items()}, h_dict

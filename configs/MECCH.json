@@ -30,5 +30,13 @@
     "weight_decay": 0.0,
     "batch_size": 102400,
     "exclude": false
+  },
+  "pubmed": {
+    "max_mp_length": 1,
+    "n_layers": 3,
+    "lr": 0.02,
+    "weight_decay": 0.0,
+    "batch_size": 102400,
+    "exclude": false
   }
 }

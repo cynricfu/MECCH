@@ -112,6 +112,14 @@ class HAN(nn.Module):
 
         return {self.target_ntype: self.predict(h)}
 
+    def get_embs(self, g, x_dict):
+        h = x_dict[self.target_ntype]
+
+        for gnn in self.layers:
+            h = gnn(g, h)
+
+        return {self.target_ntype: self.predict(h)}, {self.target_ntype: h}
+
 
 class HAN_lp(nn.Module):
     def __init__(self, g, metapaths_u, target_ntype_u, in_size_u, metapaths_v, target_ntype_v, in_size_v, hidden_size,

@@ -141,15 +141,16 @@ class MetapathFusion(nn.Module):
 
     def forward(self, h_list):
         if self.fusion_type == "mean":
-            return self.linear(th.mean(th.stack(h_list), dim=0))
+            fused = th.mean(th.stack(h_list), dim=0)
         elif self.fusion_type == "weight":
-            return self.linear(th.sum(th.stack(h_list) * self.weight[:, None, None], dim=0))
+            fused = th.sum(th.stack(h_list) * self.weight[:, None, None], dim=0)
         elif self.fusion_type == "conv":
-            return self.linear(th.sum(th.stack(h_list).transpose(0, 1) * self.conv, dim=1))
+            fused = th.sum(th.stack(h_list).transpose(0, 1) * self.conv, dim=1)
         elif self.fusion_type == "cat":
-            return self.linear(th.hstack(h_list))
+            fused = th.hstack(h_list)
         else:
             raise NotImplementedError
+        return self.linear(fused), fused
 
 
 class MECCHLayer(nn.Module):
@@ -210,12 +211,13 @@ class MECCHLayer(nn.Module):
                     block.dstnodes[ntype].data["h_dst"] = h_dict[ntype][:block.num_dst_nodes(ntype)]
 
             out_h_dict = {}
+            out_embs_dict = {}
             for ntype in block.dsttypes:
                 if block.num_dst_nodes(ntype) > 0:
                     metapath_outs = []
                     for metapath_str in self.metapaths_dict[ntype]:
                         metapath_outs.append(self.context_encoders[metapath_str](block, h_dict, metapath_str))
-                    out_h_dict[ntype] = self.metapath_fuse[ntype](metapath_outs)
+                    out_h_dict[ntype], out_embs_dict[ntype] = self.metapath_fuse[ntype](metapath_outs)
 
             for ntype in out_h_dict:
                 if self.residual is not None:
@@ -228,7 +230,7 @@ class MECCHLayer(nn.Module):
                     out_h_dict[ntype] = self.activation(out_h_dict[ntype])
                 out_h_dict[ntype] = self.dropout(out_h_dict[ntype])
 
-            return out_h_dict
+            return out_h_dict, out_embs_dict
 
 
 class MECCH(nn.Module):
@@ -299,9 +301,24 @@ class MECCH(nn.Module):
         h_dict = h_embed_dict | h_linear_dict
 
         for block, layer in zip(blocks, self.MECCH_layers):
-            h_dict = layer(block, h_dict)
+            h_dict, _ = layer(block, h_dict)
 
         return h_dict
+
+    # used to get node representations for node classification tasks
+    # (i.e., the node vectors just before applying the final linear layer of the last MECCH layer)
+    def get_embs(self, blocks, x_dict):
+        nids_dict = {ntype: nids for ntype, nids in blocks[0].srcdata[dgl.NID].items() if self.in_dim_dict[ntype] < 0}
+
+        # ntype-specific embedding/projection
+        h_embed_dict = self.embed_layer(nids_dict)
+        h_linear_dict = self.linear_layer(x_dict)
+        h_dict = h_embed_dict | h_linear_dict
+
+        for block, layer in zip(blocks, self.MECCH_layers):
+            h_dict, embs_dict = layer(block, h_dict)
+
+        return h_dict, embs_dict
 
 
 class khopMECCHLayer(nn.Module):

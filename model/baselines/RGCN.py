@@ -237,3 +237,35 @@ class RGCN(nn.Module):
                 h_dict = layer(g, h_dict)
 
         return h_dict
+
+    def get_embs(self, g=None, x_dict=None):
+        if isinstance(g, list):
+            # minibatch forward
+            nids_dict = {
+                ntype: nids
+                for ntype, nids in g[0].srcdata[dgl.NID].items()
+                if self.in_dim_dict[ntype] < 0
+            }
+            h_embed_dict = self.embed_layer(nids_dict)
+            h_linear_dict = self.linear_layer(x_dict)
+            h_dict = h_embed_dict | h_linear_dict
+
+            for layer, block in zip(self.layers, g):
+                embs_dict = h_dict
+                h_dict = layer(block, h_dict)
+        else:
+            # full graph forward
+            nids_dict = {
+                ntype: g.nodes(ntype)
+                for ntype in g.ntypes
+                if self.in_dim_dict[ntype] < 0
+            }
+            h_embed_dict = self.embed_layer(nids_dict)
+            h_linear_dict = self.linear_layer(x_dict)
+            h_dict = h_embed_dict | h_linear_dict
+
+            for layer in self.layers:
+                embs_dict = h_dict
+                h_dict = layer(g, h_dict)
+
+        return h_dict, embs_dict
