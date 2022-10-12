@@ -1,6 +1,6 @@
 ## IMDB Dataset
 
-Originally from [HAN](https://github.com/Jhy1993/HAN).
+Originally from [IMDB 5000 Movie Dataset](https://www.kaggle.com/datasets/carolzhangdc/imdb-5000-movie-dataset).
 
 Preprocessed by [GTN](https://github.com/seongjunyun/Graph_Transformer_Networks).
 
