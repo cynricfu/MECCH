@@ -8,4 +8,5 @@ We use the version provided by GTN.
 
 ### Usage
 
-Obtain the dataset from [GTN](https://github.com/seongjunyun/Graph_Transformer_Networks), extract and copy `edges.pkl`, `labels.pkl`, and `node_features.pkl` into this directory.
+1. Obtain the dataset from [GTN](https://github.com/seongjunyun/Graph_Transformer_Networks).
+2. Extract and copy `edges.pkl`, `labels.pkl`, and `node_features.pkl` into this directory.
