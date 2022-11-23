@@ -42,7 +42,7 @@ optional arguments:
                         repeat the training and testing for N times
 ```
 
-Before running the script, you need to first download and extract the datasets into correct locations. Please refer to the respective dataset README [above](###-datasets).
+Before running the script, you need to first download and extract the datasets into correct locations. Please refer to the respective dataset README [above](#datasets).
 
 After data preparation, the code can be easily run. For example, to run MECCH on the IMDB dataset for node classification using GPU, use the following command:
 ```
