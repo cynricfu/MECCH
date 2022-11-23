@@ -1,7 +1,8 @@
 ## MAGNN
 
 This repository provides a reference implementation of MECCH as described in the paper:
-> MECCH: Metapath Context Convolution-based Heterogeneous Graph Neural Networks.
+> MECCH: Metapath Context Convolution-based Heterogeneous Graph Neural Networks.<br>
+> Xinyu Fu, Irwin King
 
 TODO
 
@@ -14,13 +15,11 @@ TODO
 
 ### Datasets
 
-* IMDB
-* ACM
-* DBLP
-* LastFM
-* PubMed
-
-TODO
+* [IMDB](data/imdb-gtn/README.md)
+* [ACM](data/acm-gtn/README.md)
+* [DBLP](data/dblp-gtn/README.md)
+* [LastFM](data/lastfm/README.md)
+* [PubMed](data/pubmed/README.md)
 
 ### Usage
 
@@ -41,6 +40,17 @@ optional arguments:
                         config file for model hyperparameters
   --repeat REPEAT, -r REPEAT
                         repeat the training and testing for N times
+```
+
+Before running the script, you need to first download and extract the datasets into correct locations. Please refer to the respective dataset README [above](###-datasets).
+
+After data preparation, the code can be easily run. For example, to run MECCH on the IMDB dataset for node classification using GPU, use the following command:
+```
+python main.py -m MECCH -t node_classification -d imdb-gtn -g 0
+```
+To run MECCH on the LastFM dataset for link prediction using GPU, use the following command:
+```
+python main.py -m MECCH -t link_prediction -d lastfm -g 0
 ```
 
 ### Citing
