@@ -1,8 +1,11 @@
 ## MECCH
 
-This repository provides a reference implementation of MECCH as described in the paper [arXiv:2211.12792](https://arxiv.org/abs/2211.12792):
-> MECCH: Metapath Context Convolution-based Heterogeneous Graph Neural Networks.<br>
-> Xinyu Fu, Irwin King
+This repository provides a reference implementation of MECCH as described in the following paper.
+> MECCH: Metapath Context Convolution-based Heterogeneous Graph Neural Networks<br>
+> Xinyu Fu, Irwin King<br>
+> Neural Networks 170 (2024) 266-275
+
+Also available at [arXiv:2211.12792](https://arxiv.org/abs/2211.12792).
 
 ### Dependencies
 
@@ -55,11 +58,14 @@ python main.py -m MECCH -t link_prediction -d lastfm -g 0
 
 If you find MECCH useful in your research, please cite the following paper:
 ```
-@article{fu2022mecch,
-  author    = {Xinyu Fu and Irwin King},
-  title     = {MECCH: Metapath Context Convolution-based Heterogeneous Graph Neural Networks},
-  journal   = {CoRR},
-  volume    = {abs/2211.12792},
-  year      = {2022}
+@article{fu2024mecch,
+  author       = {Xinyu Fu and
+                  Irwin King},
+  title        = {{MECCH:} Metapath Context Convolution-based Heterogeneous Graph Neural
+                  Networks},
+  journal      = {Neural Networks},
+  volume       = {170},
+  pages        = {266--275},
+  year         = {2024}
 }
 ```
