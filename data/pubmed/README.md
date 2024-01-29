@@ -1,4 +1,4 @@
-## LastFM Dataset
+## PubMed Dataset
 
 From [HNE](https://github.com/yangji9181/HNE).
 
